@@ -19,10 +19,9 @@ class GameViewController: UIViewController, UITextViewDelegate {
     var word = [Character]()
     var displayWord = [Character]()
     var numberWrong:Int = 0
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
+    
+    
+    func begin() {
         // Do any additional setup after loading the view.
         numWrong.text = String(self.numberWrong)
         wrongGuesses.text = ""
@@ -31,6 +30,10 @@ class GameViewController: UIViewController, UITextViewDelegate {
         let phrase:String! = hangmanPhrases.getRandomPhrase()
         print(phrase)
         
+        word.removeAll()
+        displayWord.removeAll()
+        numberWrong = 0
+        numWrong.text = String(numberWrong)
         for c in phrase.characters {
             self.word.append(c)
         }
@@ -44,9 +47,16 @@ class GameViewController: UIViewController, UITextViewDelegate {
                 displayChars.text?.append("_")
             }
         }
-        let image:UIImage = #imageLiteral(resourceName: "hangman1.gif")
-        hangmanImage = UIImageView(image: image)
+        hangmanImage.image = UIImage(named: "hangman1.gif")
     }
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        begin()
+    }
+    
+
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -55,22 +65,52 @@ class GameViewController: UIViewController, UITextViewDelegate {
     
     @IBAction func submit(_ sender: Any) {
         var guess = guessField.text!
-        if (guess.characters.count == 1) {
-            let guessChar = Character(guess)
-            if self.word.contains(guessChar) {
-                for index in 0...(word.count - 1) {
-                    if word[index] == guessChar {
-                        displayWord[index] = guessChar
+        if (wrongGuesses.text?.contains(guess.uppercased()))! {
+            let alert = UIAlertController(title: "", message:"Already guessed letter!", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in })
+            self.present(alert, animated: true){}
+        } else {
+            guessField.text = ""
+            if (guess.characters.count == 1) {
+                let guessChar = Character(guess.uppercased())
+                if self.word.contains(guessChar) {
+                    for index in 0...(word.count - 1) {
+                        if word[index] == guessChar {
+                            displayWord[index] = guessChar
+                        }
                     }
-                }
-                displayChars.text = ""
-                for c in displayWord {
-                    displayChars.text?.append(c)
+                    displayChars.text = ""
+                    for c in displayWord {
+                        displayChars.text?.append(c)
+                    }
+                } else {
+                    self.numberWrong += 1
+                    numWrong.text = String(self.numberWrong)
+                    wrongGuesses.text! += String(guessChar) + " "
+                    let hangIndex = self.numberWrong + 1
+                    let hangString = "hangman" + String(hangIndex) + ".gif"
+                    hangmanImage.image = UIImage(named: hangString)
+                    
+                    
                 }
             } else {
-                self.numberWrong += 1
-                numWrong.text = String(self.numberWrong)
-                wrongGuesses.text! += String(guessChar) + " "
+                let alert = UIAlertController(title: "", message:"Guess only one letter", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in })
+                self.present(alert, animated: true){}
+            }
+            if (self.numberWrong == 6) {
+                let alert = UIAlertController(title: "", message:"You lose!", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Start New Game", style: .default) { _ in
+                    self.begin()
+                })
+                self.present(alert, animated: true){}
+            }
+            else if (!displayWord.contains("_")) {
+                let alert = UIAlertController(title: "", message:"You Win!", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Start New Game", style: .default) { _ in
+                    self.begin()
+                })
+                self.present(alert, animated: true){}
             }
         }
     }
